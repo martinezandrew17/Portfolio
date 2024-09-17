@@ -1,0 +1,107 @@
+import customtkinter as ctk
+import json
+
+class BudgetApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("Budget App")
+        self.geometry("400x400")
+
+        self.budget = Budget()
+
+        self.income_label = ctk.CTkLabel(self, text="Income:")
+        self.income_label.pack(pady=10)
+        self.income_entry = ctk.CTkEntry(self)
+        self.income_entry.pack(pady=5)
+        self.add_income_button = ctk.CTkButton(self, text="Add Income", command=self.add_income)
+        self.add_income_button.pack(pady=10)
+
+        self.expense_label = ctk.CTkLabel(self, text="Expense Name:")
+        self.expense_label.pack(pady=10)
+        self.expense_name_entry = ctk.CTkEntry(self)
+        self.expense_name_entry.pack(pady=5)
+
+        self.expense_amount_label = ctk.CTkLabel(self, text="Expense Amount:")
+        self.expense_amount_label.pack(pady=10)
+        self.expense_amount_entry = ctk.CTkEntry(self)
+        self.expense_amount_entry.pack(pady=5)
+        self.add_expense_button = ctk.CTkButton(self, text="Add Expense", command=self.add_expense)
+        self.add_expense_button.pack(pady=10)
+
+        self.balance_button = ctk.CTkButton(self, text="Show Balance", command=self.show_balance)
+        self.balance_button.pack(pady=10)
+
+        self.expense_button = ctk.CTkButton(self, text="Show Expense", command=self.show_expenses)
+        self.expense_button.pack(pady=10)
+
+        self.save_button = ctk.CTkButton(self, text="Save to File", command=self.save_to_file)
+        self.save_button.pack(pady=10)
+
+        self.output_text = ctk.CTkTextbox(self, width=300, height=100)
+        self.output_text.pack(pady=100)
+
+    def add_income(self):
+        try:
+            amount = float(self.income_entry.get())
+            self.budget.add_income(amount)
+            self.income_entry.delete(0, ctk.END)
+            self.output_text.insert(ctk.END, f"Added income: ${amount:.2f}\n")
+        except ValueError:
+            self.output_text.insert(ctk.END, "Invalid income amount\n")
+
+    def add_expense(self):
+        try:
+            name = self.expense_name_entry.get()
+            amount = float(self.expense_amount_entry.get())
+            self.budget.add_expense(name, amount)
+            self.expense_name_entry.delete(0, ctk.END)
+            self.expense_amount_entry.delete(0, ctk.END)
+            self.output_text.insert(ctk.END, f"Added expense: {name} - ${amount:.2f}\n")
+        except ValueError:
+            self.output_text.insert(ctk.END, "Invalid expense amount\n")
+
+    def show_balance(self):
+        balance = self.budget.calculate_balance()
+        self.output_text.insert(ctk.END, f"Current Balance: ${balance:.2f}\n")
+
+    def show_expenses(self):
+        self.output_text.insert(ctk.END, "Expenses:\n")
+        for expense in self.budget.expenses:
+            self.output_text.insert(ctk.END, f"{expense['name']}: ${expense['amount']:.2f}\n")
+        if not self.budget.expenses:
+            self.output_text.insert(ctk.END, "No expenses recorded.\n")
+
+    def save_to_file(self):
+        filename = "budget_data.json"
+        self.budget.save_to_file(filename)
+        self.output_text.insert(ctk.END, f"Data saved to {filename}\n")
+
+
+class Budget:
+    def __init__(self):
+        self.income = 0
+        self.expenses = []
+
+    def add_income(self, amount):
+        self.income += amount
+
+    def add_expense(self, name, amount):
+        self.expenses.append({"name": name, "amount": amount})
+
+    def calculate_balance(self):
+        total_expenses = sum(expense["amount"] for expense in self.expenses)
+        return self.income - total_expenses
+
+    def save_to_file(self, filename):
+        data = {
+            "income": self.income,
+            "expenses": self.expenses
+        }
+        with open(filename, 'w') as f:
+            json.dump(data, f)
+
+
+if __name__ == "__main__":
+    app = BudgetApp()
+    app.mainloop()
